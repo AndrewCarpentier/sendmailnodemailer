@@ -1,7 +1,8 @@
 const bodyParser = require("body-parser");
 const express = require("express");
 const nodemailer = require("nodemailer");
-
+const hbs = require('nodemailer-express-handlebars');
+const path = require('path');
 const app = express();
 const http = require("http");
 const server = http.createServer(app);
@@ -20,63 +21,58 @@ app.use((req, res, next) => {
   next();
 });
 
-const n = require('./nodemailer');
+const n = require("./nodemailer");
 
-app.get('/', (req,res)=>{
-    res.send('🐱‍👤')
-})
+app.get("/", (req, res) => {
+  res.send("🐱‍👤");
+});
 app.post("/", (req, res) => {
-  // const transporter = nodemailer.createTransport({
-  //   service: "gmail",
-  //   secure: true,
-  //   auth: {
-  //     user: "andr3wcarpentier@gmail.com",
-  //     pass: "lmebtehgfblqhvxb",
-  //   },
-  // });
+  const transporter = nodemailer.createTransport({
+    //host: "smtp.gmail.com",
+    //port: 465,
+    service: "gmail",
+    auth: {
+      user: "andr3wcarpentier@gmail.com",
+      pass: "lmebtehgfblqhvxb",
+    },
+    tls: {
+      // do not fail on invalid certs
+      rejectUnauthorized: false,
+    },
+  });
 
-  // const mailOptions = {
-  //   from: "andr3wcarpentier@gmail.com",
-  //   to: "andr3wcarpentier@gmail.com",
-  //   subject: "sending mail using nodejs",
-  //   text: "that  was easy",
-  // };
+  const handlebarOptions = {
+    viewEngine:  {
+      partialsDir:  path.resolve('./views/'),
+      defaultLayout:  false
+    },
+    viewPath:  path.resolve('./views/'),
+  };
 
-  // transporter.sendMail(mailOptions, function (error, info) {
-  //   if (error) {
-  //     console.log(error);
-  //   } else {
-  //     console.log("email sent: " + info.response);
-  //   }
-  // });
+  transporter.use('compile', hbs(handlebarOptions));
+
+  const mailOptions = {
+    from: "andr3wcarpentier@gmail.com",
+    to: "andr3wcarpentier@gmail.com",
+    subject: "Sending Email using Node.js",
+    template: "email",
   
-  try {
-        const transporter = nodemailer.createTransport({
-            service: "gmail",
-            auth: {
-                user: "andr3wcarpentier@gmail.com",
-                pass: "lmebtehgfblqhvxb",
-            },
-        });
-        const mailOptions = {
-            from: "andr3wcarpentier@gmail.com",
-            to: "imkxso@gmail.com",
-            subject: "Sending Email using Node.js",
-            text: "it was easy"
-        };
-        
-        let info = transporter.sendMail(mailOptions, function (error, info) {
-            if (error) {
-                console.log(error);
-            } else {
-                console.log("Email sent: " + info.response);
-            }
-        });
-        console.log("Message sent: %s", info);
-        res.send(JSON.stringify(info));
-  } catch (error) {
-    console.error(error);
-  }
+    context: {
+      name: "Andrew",
+      token : "jikqdjsqi"
+    }
+  };
+
+  
+
+  transporter.sendMail(mailOptions, function (error, info) {
+    if (error) {
+      console.log(error);
+    } else {
+      console.log("Email sent: " + info.response);
+    }
+  });
+  res.send(JSON.stringify(true));
 });
 
 // Lancement du serveur Node.js
